@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>OpenAi Project</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+  <style>
+    .card:hover{
+     transform: scale(1.05);
+        box-shadow: 0 10px 20px rgba(0,0,0,.12), 0 4px 8px rgba(0,0,0,.06);
+      }
+      .mb-3{
+
+        margin-bottom: -15rem!important;
+      }
+      .progressbar{
+  
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          margin: 80px 0 0 -70px;
+        }
+        .progressbar span{
+          transition: all 500ms ease;
+          background: #4A72DA;
+          box-shadow: 1px 2px 3px #999;
+          height: 10px;
+          width: 10px;  
+          display: inline-block;
+          border-radius: 10px;
+          animation: wave 2s ease  infinite;
+        }  
+
+      .progressbar span:nth-child(1){  animation-delay: 0; }
+      .progressbar span:nth-child(2){  animation-delay: 100ms; }
+      .progressbar span:nth-child(3){  animation-delay: 200ms; }
+      .progressbar span:nth-child(4){  animation-delay: 300ms; }
+      .progressbar span:nth-child(5){  animation-delay: 400ms; }
+      .progressbar span:nth-child(6){  animation-delay: 500ms; }
+      .progressbar span:nth-child(7){  animation-delay: 600ms; }
+      .progressbar span:nth-child(8){  animation-delay: 700ms; }
+
+        @keyframes wave{
+          0%, 40%, 100% { 
+            transform: translate(0, 0);
+            background-color: #4A72DA;    
+          }
+          10% { 
+            transform: translate(0, -15px); 
+            background-color: red;    
+          }  
+        }
+  </style>
+  </head>
+<body>
+
+  <div class="container-fluid">
+    <div class="row align-items-start"> 
+      <div class="col-lg-6 offset-md-3">
+        <h1 class="text-center">Fun with AI</h1>
+          <div class="progressbar container" id="progress" style="display:none;">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+      </div>   
+    </div>
+
+
+    <div class="row">
+      <div class="col-lg-2 offset-md-1">
+        <label for="comment" class="text-dark">Try These Prompt:</label>
+              <div class="card bg-primary">      
+                <a href="#" id="promptone" class="text-decoration-none">
+                  <div class="card-body text-light">
+                    Write a tagline for an ice cream shop.
+                  </div>
+                </a>     
+              </div>
+              <br>
+              <div class="card bg-success">      
+                <a href="#" id="prompttwo" class="text-decoration-none">
+                  <div class="card-body text-light">
+                    Decide whether a Tweet's sentiment is positive, neutral, or negative.
+                    <br><br>
+                    Tweet: "I loved the new Batman movie!"
+                    Sentiment:
+                  </div>
+                </a>     
+              </div>
+              <br>
+             
+              <div class="card bg-warning">      
+                <a href="#" id="promptfour" class="text-decoration-none">
+                  <div class="card-body text-light">
+                    Brainstorm some ideas combining VR and fitness:
+                  </div>
+                </a>     
+              </div>
+      </div>
+
+      <div class="col-lg-6 mt-5">
+        <form id="aiform">
+          <div class="mb-2">
+            <label for="comment" class="text-dark">Enter Prompt:</label>
+            <textarea class="form-control" rows="8" id="prompt" name="text"></textarea>
+          </div>
+          <button type="reset" class="btn btn-warning">Reset</button>
+          <button type="submit" class="btn btn-primary float-end" >Submit</button>
+        </form>
+      </div>
+      <!-- <div class="col-lg-2 mt-5">
+        <label for="comment" class="text-dark">Select Engine:</label>
+          <select id="engine" class="form-select">
+            
+          </select>
+      </div> -->
+    </div>
+
+    <div class="row align-items-center">
+      
+      <div class="col-lg-6 offset-md-3">
+        <h1 class="text-center">Responses</h1>
+    
+              <div class="offcanvas-body border border-secondary" id="response">
+                
+              </div>             
+      
+      </div>
+      
+    </div>
+
+    <div class="row align-items-end">
+      
+      <div class="col-lg-6 offset-md-3">
+        
+        <div id="oldresdiv" style="display:none;">
+          <h1 class="text-center">Previous Response</h1>
+        </div>              
+      
+      </div>
+      
+    </div>
+    
+  </div>
+
+
+<script
+  src="https://code.jquery.com/jquery-3.6.0.js"
+  integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk="
+  crossorigin="anonymous"></script>
+
+  <script>
+      $(document).ready(function(){
+        //Begin script
+
+        //Retrieve Storage of old Responses
+          if (typeof(Storage) !== "undefined") { 
+              // Retrieve
+              if (localStorage.oldres){
+               
+                $("#oldresdiv").show();
+
+                  let retrievedObject = localStorage.getItem('oldres');
+                  let objectparse = JSON.parse(retrievedObject);
+
+                  for(var i = 0; i < objectparse.length; i++){                  
+                                       
+                                       $('<div class="row offset-md-2" >'+'<div class="card" style="width: 40rem;">'+
+                                            '<div class="card-body">'+
+                                              '<p class="card-text"><b>Promt:</b>&nbsp;'+objectparse[i].prompt+'</p> <br>'+                       
+                                              '<p class="card-text"><b>Response:</b>'+objectparse[i].response+'</p> '+
+                                              '<p class="card-text"><b>Engine:</b>&nbsp;'+objectparse[i].engine+'</p> <br>'+ 
+                                            '</div>'+ 
+                                          '</div>'+'</div>'+'<br>').appendTo('#oldresdiv'); 
+
+                  }
+                  
+                  
+              }
+              
+          } else {
+
+            $("#oldresponse").html(localStorage.getItem("Sorry, your browser does not support Web Storage..."));
+
+            }  
+        
+            // GETTING AND SETTING SELECT BOX ENGINES
+          //     $.ajax({
+          //         url: 'https://api.openai.com/v1/engines',
+          //         beforeSend: function(xhr) {
+          //             xhr.setRequestHeader("Authorization", "Bearer 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")
+          //         }, success: function(res){
+          //               for(var i = 0; i < res.data.length; i++){
+          //                 $('#engine').append('<option value="' +
+          //                 res.data[i].id +'">'+ res.data[i].id +'</option>');        
+          //             }
+          //             $(':input[type="submit"]').prop('disabled', false);
+          //         }
+          // })
+
+
+      //ADDING NEW RESPONSE TO LOCALSTORAGE
+          function addNewitem(prompt, response,engine) {
+            var oldres = [];
+
+            var show = {
+              prompt: prompt,
+              response: response,
+              engine:engine    
+            };
+            
+            oldres.push(show);
+            oldres = oldres.concat(JSON.parse(localStorage.getItem('oldres')||'[]'));
+            console.log('fromfunstion',oldres);
+
+            localStorage.setItem("oldres", JSON.stringify(oldres));
+          };
+
+
+    //PROMPT FORM SUBMIT
+          $("#aiform").submit(function(e){
+            
+            e.preventDefault();
+            $("#response").html("");
+            $("#progress").show();
+            let engine = $("#engine").val();
+            let prompt = $("#prompt").val();
+           
+            const data = {
+                prompt: prompt,
+                temperature: 0.5,
+                max_tokens: 64,
+                top_p: 1.0,
+                frequency_penalty: 0.0,
+                presence_penalty: 0.0,
+                };
+            
+                let body = JSON.stringify(data);
+                
+                //let requrl = 'https://api.openai.com/v1/engines/'+ engine +'/completions';
+                
+                $.ajax({
+                   type: "POST",
+                   contentType: "application/json",
+                   url: 'https://api.openai.com/v1/engines/text-curie-001/completions',
+                   data: body,
+                   beforeSend: function(xhr) {
+                    
+                       xhr.setRequestHeader("Authorization", "Bearer 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")
+                      
+                   }, success: function(res){
+                    $("#progress").hide();
+                    for(var i = 0; i < res.choices.length; i++){
+                          var matches = res.choices[i].text.replace(/\n/g, "<br />");
+                          $('#response').append('<p>Promt:&nbsp'+ prompt +'</p><br>'+'<p>Response:'+ matches +'</p>');
+                          // Check browser support
+                          if (typeof(Storage) !== "undefined") {
+                            // Store
+                            addNewitem(prompt,matches,engine)
+                            //localStorage.setItem("response", matches); 
+                          } else {
+                            document.getElementById("result").innerHTML = "Sorry, your browser does not support Web Storage...";
+                          }          
+                      }
+                      
+                   }
+                })
+
+          });    
+
+        //PRESET PROMPT ONE
+          $("#promptone").click(function(){
+            $("#progress").show();
+            $("#response").html("");
+            const data = {
+                prompt: "Write a tagline for an ice cream shop.",
+                temperature: 0.5,
+                max_tokens: 64,
+                top_p: 1.0,
+                frequency_penalty: 0.0,
+                presence_penalty: 0.0,
+                };
+            let body = JSON.stringify(data);
+            $.ajax({
+                   type: "POST",
+                   contentType: "application/json",
+                   url: 'https://api.openai.com/v1/engines/text-curie-001/completions',
+                   data: body,
+                   beforeSend: function(xhr) {
+                    
+                       xhr.setRequestHeader("Authorization", "Bearer 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")
+                      
+                   }, success: function(res){
+                    $("#progress").hide();
+                    for(var i = 0; i < res.choices.length; i++){
+                          var matches = res.choices[i].text.replace(/\n/g, "<br />");
+                          $('#response').append('<p>Promt:&nbsp'+ data.prompt +'</p><br>'+'<p>Response:'+ matches +'</p>');     
+                      }
+                   }
+                })
+          });
+
+          //PRESET PROMPT TWO
+          $("#prompttwo").click(function(){
+            $("#progress").show();
+            $("#response").html("");
+            const data = {
+                prompt: "Decide whether a Tweet's sentiment is positive, neutral, or negative.\n\nTweet: \"I loved the new Batman movie!\"\nSentiment:",
+                temperature: 0.5,
+                max_tokens: 64,
+                top_p: 1.0,
+                frequency_penalty: 0.0,
+                presence_penalty: 0.0,
+                };
+            let body = JSON.stringify(data);
+            $.ajax({
+                   type: "POST",
+                   contentType: "application/json",
+                   url: 'https://api.openai.com/v1/engines/text-curie-001/completions',
+                   data: body,
+                   beforeSend: function(xhr) {
+                    
+                       xhr.setRequestHeader("Authorization", "Bearer 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")
+                      
+                   }, success: function(res){
+                    $("#progress").hide();
+                    for(var i = 0; i < res.choices.length; i++){
+                          var matches = res.choices[i].text.replace(/\n/g, "<br />");
+                          $('#response').append('<p>Promt:&nbsp'+ data.prompt +'</p><br>'+'<p>Response:'+ matches +'</p>');         
+                      }
+                   }
+                })
+          });
+
+          //PRESET PROMPT THREE
+          $("#promptthree").click(function(){
+            $("#progress").show();
+            $("#response").html("");
+            const data = {
+                prompt: "Translate this into 1. French, 2. Spanish and 3. Japanese:\n\nWhat rooms do you have available?\n\n1.",
+                temperature: 0.5,
+                max_tokens: 64,
+                top_p: 1.0,
+                frequency_penalty: 0.0,
+                presence_penalty: 0.0,
+                };
+            let body = JSON.stringify(data);
+            $.ajax({
+                   type: "POST",
+                   contentType: "application/json",
+                   url: 'https://api.openai.com/v1/engines/text-curie-001/completions',
+                   data: body,
+                   beforeSend: function(xhr) {
+                    
+                       xhr.setRequestHeader("Authorization", "Bearer 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")
+                      
+                   }, success: function(res){
+                    $("#progress").hide();
+                    for(var i = 0; i < res.choices.length; i++){
+                      var matches = res.choices[i].text.replace(/\n/g, "<br />");
+                      $('#response').append('<p>Promt:&nbsp'+ data.prompt +'</p><br>'+'<p>Response:'+ matches +'</p>');       
+                      }
+                   }
+                })
+          });
+
+          //PRESET PROMPT FOUR
+          $("#promptfour").click(function(){
+            $("#progress").show();
+            $("#response").html("");
+            const data = {
+                prompt: "Brainstorm some ideas combining VR and fitness:",
+                temperature: 0.5,
+                max_tokens: 64,
+                top_p: 1.0,
+                frequency_penalty: 0.0,
+                presence_penalty: 0.0,
+                };
+            let body = JSON.stringify(data);
+            $.ajax({
+                   type: "POST",
+                   contentType: "application/json",
+                   url: 'https://api.openai.com/v1/engines/text-curie-001/completions',
+                   data: body,
+                   beforeSend: function(xhr) {
+                    
+                       xhr.setRequestHeader("Authorization", "Bearer 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")
+                      
+                   }, success: function(res){
+                    $("#progress").hide();
+                    for(var i = 0; i < res.choices.length; i++){
+                          var matches = res.choices[i].text.replace(/\n/g, "<br />");
+                          $('#response').append('<p>Promt:&nbsp'+ data.prompt +'</p><br>'+'<p>Response:'+ matches +'</p>');        
+                      }
+                   }
+                })
+          });
+
+//end Script
+    }); 
+  </script> 
+</body>
+</html>
